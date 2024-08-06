@@ -35,12 +35,7 @@
 
                 const data = await response.json();
 
-                console.log({data})
-
-                console.log(data.data.paymentSessionId)
-
-                    // Initialize Cashfree Payments SDK
-                    const cashfree = new Cashfree(data.paymentSessionId);
+                const cashfree = new Cashfree(data.paymentSessionId);
 
                 const checkoutOptions = {
                     paymentSessionId: data.data.paymentSessionId,
