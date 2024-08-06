@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashfree Payment Integration</title>
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+</head>
+<body>
+    <h1>Cashfree Payment Integration</h1>
+    <form id="payment-form">
+        <label for="amount">Amount:</label>
+        <input type="number" id="amount" required><br><br>
+        
+        <button type="button" onclick="initiatePayment()">Pay Now</button>
+    </form>
+
+    <div id="payment-container"></div>
+
+    <script>
+        async function initiatePayment() {
+            const amount = document.getElementById('amount').value;
+
+            try {
+                // Create order on your server
+                const response = await fetch('http://localhost:4000/api/v1/checkouts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                    }),
+                });
+
+                const data = await response.json();
+
+                console.log({data})
+
+                console.log(data.data.paymentSessionId)
+
+                    // Initialize Cashfree Payments SDK
+                    const cashfree = new Cashfree(data.paymentSessionId);
+
+                const checkoutOptions = {
+                    paymentSessionId: data.data.paymentSessionId,
+                    returnUrl: `https://localhost:4001/${data.data.orderId}`,
+                    mode: "TEST"
+                };
+
+                cashfree.checkout(checkoutOptions)
+                    .then(function(result){
+                        if(result.error) {
+                            throw new Error(result.error.message);
+                        }
+                        console.log(result);
+                        // Handle success
+                        alert("Payment successful!");
+                    })
+                    .catch(function(error){
+                        console.error(error);
+                        alert("Payment failed: " + error.message);
+                    });
+
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('An error occurred while processing the payment. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>
