@@ -20,17 +20,17 @@
     <script>
         async function initiatePayment() {
             const amount = document.getElementById('amount').value;
+            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YmNhYTI5NC1kNThhLTRmZWMtOGU1MC1jM2NlZWZmODgwNmEiLCJlbWFpbCI6InJhdXNoYW5rdW1hcjI3OTg3OEBnbWFpbC5jb20iLCJpYXQiOjE3MjM0ODQ1NDgsImV4cCI6MTcyMzU3MDk0OH0.OAbylAOAdLj45NA4CS67qQ_nD0CbjskaSCIf6dAws-s'
 
             try {
                 // Create order on your server
-                const response = await fetch('http://localhost:4000/api/v1/checkouts?gateway=CASHFREE', {
+                const response = await fetch('http://localhost:4000/api/v1/checkouts?type=COURSE&itemId=b9520e52-3d6f-4959-a4fd-bffcf7938d1d', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        amount: amount,
-                    }),
+                        'Authorization': `Bearer ${token}`,
+                        'cf-ipcountry': 'IN'
+                    }
                 });
 
                 const data = await response.json();
