@@ -3,65 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cashfree Payment Integration</title>
+    <title>Cashfree Subscription Checkout</title>
     <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+    <style>
+        /* Optional: Basic styling for the error message */
+        #paymentMessage {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .alert-danger {
+            color: red;
+        }
+        .alert-success { /* Although not used in snippet, good to have */
+            color: green;
+        }
+    </style>
 </head>
 <body>
-    <h1>Cashfree Payment Integration</h1>
-    <form id="payment-form">
-        <label for="amount">Amount:</label>
-        <input type="number" id="amount" required><br><br>
-        
-        <button type="button" onclick="initiatePayment()">Pay Now</button>
+    <h1>Cashfree Subscription Checkout</h1>
+    <form id="subscription-form">
+        <label for="subsSessionId">Subscription Session ID:</label>
+        <input type="text" id="subsSessionId" required style="width: 400px;"><br><br>
+
+        <button type="button" id="subsCheckout">Pay Now</button>
     </form>
 
-    <div id="payment-container"></div>
+    <div id="paymentMessage"></div>
 
     <script>
-        async function initiatePayment() {
-            const amount = document.getElementById('amount').value;
+        // Get the message element
+        const paymentMessage = document.getElementById("paymentMessage");
 
-            try {
-                // Create order on your server
-                const response = await fetch('http://localhost:4000/api/v1/checkouts', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        amount: amount,
-                    }),
-                });
+        // Initialize Cashfree SDK
+        const cashfree = Cashfree({
+            mode: "sandbox" // Ensure this is "sandbox" for testing
+        });
 
-                const data = await response.json();
+        // Add event listener to the button
+        document.getElementById("subsCheckout").addEventListener("click", function(){
+            // Clear previous messages and styles
+            paymentMessage.innerText = "";
+            paymentMessage.classList.remove("alert-danger");
+            paymentMessage.classList.remove("alert-success");
 
-                const cashfree = new Cashfree(data.paymentSessionId);
+            const subsSessionIdValue = document.getElementById("subsSessionId").value;
 
-                const checkoutOptions = {
-                    paymentSessionId: data.data.paymentSessionId,
-                    returnUrl: `https://localhost:4001/${data.data.orderId}`,
-                    mode: "TEST"
-                };
-
-                cashfree.checkout(checkoutOptions)
-                    .then(function(result){
-                        if(result.error) {
-                            throw new Error(result.error.message);
-                        }
-                        console.log(result);
-                        // Handle success
-                        alert("Payment successful!");
-                    })
-                    .catch(function(error){
-                        console.error(error);
-                        alert("Payment failed: " + error.message);
-                    });
-
-            } catch (error) {
-                console.error('Payment error:', error);
-                alert('An error occurred while processing the payment. Please try again.');
+            if (!subsSessionIdValue) {
+                paymentMessage.innerText = "Please enter the Subscription Session ID.";
+                paymentMessage.classList.add("alert-danger");
+                return;
             }
-        }
+
+            console.log("Launching Cashfree subscription checkout with session ID:", subsSessionIdValue);
+
+            // Use subscriptionsCheckout method
+            cashfree.subscriptionsCheckout({
+                subsSessionId: subsSessionIdValue,
+                redirectTarget: "_blank" // Open in new tab
+            }).then(function(result){
+                if(result.error){
+                    console.error("Cashfree subscriptionsCheckout error:", result.error);
+                    paymentMessage.innerText = result.error.message; // Use innerText for security
+                    paymentMessage.classList.add("alert-danger");
+                } else if (result.redirect) {
+                    console.log("Cashfree subscriptionsCheckout initiated redirection.");
+                    // Handle potential success message or button disabling if needed
+                    // Since it redirects, immediate feedback might not be necessary here
+                }
+            }).catch(function(error) {
+                // Catch unexpected errors during the initiation
+                console.error("Unexpected error initiating Cashfree subscriptionsCheckout:", error);
+                paymentMessage.innerText = "An unexpected error occurred. Please check console.";
+                paymentMessage.classList.add("alert-danger");
+            });
+        });
     </script>
 </body>
 </html>
